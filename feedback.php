@@ -1,277 +1,115 @@
 <?php
-include './includes/db_connection.php'; 
-include './includes/sidebar.php'; 
-
-$faculty = '';
-$subject = '';
-$question1 = '';
-$question2 = '';
-$question3 = '';
-$question4 = '';
-$comments = '';
-$id = '';
-$user_id = ''; 
-
 session_start();
-$user_id = $_SESSION['user_id']; 
+include './includes/db_connection.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $faculty = $_POST['faculty'];
-    $subject = $_POST['subject'];
-    $question1 = $_POST['question1'];
-    $question2 = $_POST['question2'];
-    $question3 = $_POST['question3'];
-    $question4 = $_POST['question4'];
-    $comments = $_POST['comments'];
-
-    if (!empty($_POST['id'])) {
-        $id = $_POST['id'];
-        $stmt = $conn->prepare(
-            "UPDATE feedback SET faculty=?, subject=?, question1=?, question2=?, question3=?, question4=?, comments=? WHERE id=? AND user_id=?"
-        );
-        $stmt->bind_param("ssssssssi", $faculty, $subject, $question1, $question2, $question3, $question4, $comments, $id, $user_id);
-    } else {
-        $stmt = $conn->prepare(
-            "INSERT INTO feedback (user_id, faculty, subject, question1, question2, question3, question4, comments) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
-        );
-        $stmt->bind_param("isssssss", $user_id, $faculty, $subject, $question1, $question2, $question3, $question4, $comments);
-    }
-
-    $stmt->execute();
-    header("Location: feedback.php");
+if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'student') {
+    header("Location: login.php");
     exit();
 }
 
-if (isset($_GET['id']) && !empty($_GET['id'])) {
-    $id = $_GET['id'];
-    $stmt = $conn->prepare("SELECT * FROM feedback WHERE id=? AND user_id=?");
-    $stmt->bind_param("ii", $id, $user_id);
-    $stmt->execute();
-    $result = $stmt->get_result();
+$student_id = $_SESSION['user_id'];
+$page_title = 'Academic Feedback Terminal';
+$page_subtitle = 'Your anonymous insights help us improve teaching quality.';
+$message = '';
 
-    if ($result->num_rows > 0) {
-        $row = $result->fetch_assoc();
-        $faculty = $row['faculty'];
-        $subject = $row['subject'];
-        $question1 = $row['question1'];
-        $question2 = $row['question2'];
-        $question3 = $row['question3'];
-        $question4 = $row['question4'];
-        $comments = $row['comments'];
-        echo "<script>showFeedbackForm();</script>"; 
-    } else {
-        echo "<script>alert('No feedback found!');</script>";
-    }
+if (isset($_POST['submit_feedback'])) {
+    $form_id = $_POST['form_id'];
+    $rating = $_POST['rating'];
+    $comments = $_POST['comments'];
+
+    $stmt = $conn->prepare("INSERT INTO feedback_responses (form_id, student_id, rating, comments) VALUES (?, ?, ?, ?)");
+    $stmt->bind_param("iiis", $form_id, $student_id, $rating, $comments);
+    $stmt->execute();
+    $message = "Your contribution has been successfully recorded. Thank you for your feedback!";
 }
 
-if (isset($_GET['delete'])) {
-    $delete_id = $_GET['delete'];
-    $stmt = $conn->prepare("DELETE FROM feedback WHERE id=? AND user_id=?");
-    $stmt->bind_param("ii", $delete_id, $user_id);
-    $stmt->execute();
-}
-
-$stmt = $conn->prepare("SELECT * FROM feedback WHERE user_id=?");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-$result = $stmt->get_result();
+// Fetch active forms for the student - Fixed JOIN on profile_info
+$active_forms = $conn->query("SELECT f.*, p.first_name, p.last_name, s.name as subject_name 
+                               FROM feedback_forms f 
+                               LEFT JOIN profile_info p ON f.teacher_id = p.user_id 
+                               JOIN subjects s ON f.subject_id = s.id 
+                               WHERE f.status = 'active' 
+                               AND f.id NOT IN (SELECT form_id FROM feedback_responses WHERE student_id = $student_id)
+                               ORDER BY f.created_at DESC");
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Feedback Management</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Voice of Student | SMS</title>
+    <?php include './includes/links.php'; ?>
+    <link rel="stylesheet" href="index.css">
     <style>
-        body {
-            background-color: #f8f9fa;
-        }
-
-        .content-wrapper {
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            height: auto;
-            margin-left: 220px;
-            padding-top: 60px;
-        }
-
-        .card {
-            border: none;
-            border-radius: 8px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-        }
-
-        h2,
-        h5 {
-            color: #343a40;
-        }
-
-        .form-label {
-            font-weight: bold;
-        }
-
-        .btn-primary {
-            background-color: #007bff;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            background-color: #0056b3;
-        }
-
-        .table th,
-        .table td {
-            vertical-align: middle;
-        }
+        .feedback-item { background: #ffffff; padding: 32px 0; border-bottom: 2px solid #f8fafc; }
+        .rating-chip { cursor: pointer; transition: all 0.2s; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 20px; font-weight: 700; color: #64748b; }
+        .form-check-input:checked + .rating-chip { background: var(--primary); color: #ffffff; border-color: var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+        .form-check-input { display: none; }
+        .form-control { background: #ffffff !important; border: 1px solid #e2e8f0 !important; }
     </style>
 </head>
 
 <body>
     <?php include './includes/navbar.php'; ?>
+    <?php include './includes/sidebar.php'; ?>
 
     <div class="content-wrapper">
-        <div class="container">
-            <div class="card mb-4">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <h4 class="card-title mb-0">Feedback Management</h4>
-                    <button class="btn btn-primary" onclick="showFeedbackForm()">Create Feedback</button>
-                </div>
-            </div>
+        <div class="container py-4">
 
-            <div id="feedbackForm" style="display: none;">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <h5 class="card-title">Submit Feedback</h5>
-                        <form id="formFeedback" action="feedback.php" method="POST">
-                            <input type="hidden" name="id" value="<?php echo htmlspecialchars($id); ?>">
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="faculty" class="form-label">Faculty</label>
-                                    <select class="form-select" name="faculty" required>
-                                        <option value="">Select Faculty</option>
-                                        <?php
-                                        $faculties = ['Twinkle Modi', 'Aiysha Siddiqui', 'Isha Prajapati', 'Hasti Patel', 'Satyendra Sharma', 'Enakshi Chakraborty', 'Pratima Patil', 'Akil Surti'];
-                                        foreach ($faculties as $fac) {
-                                            echo '<option value="' . $fac . '" ' . ($faculty == $fac ? 'selected' : '') . '>' . $fac . '</option>';
-                                        }
-                                        ?>
-                                    </select>
+            <?php if ($message): ?>
+                <div class="alert bg-success-soft text-success border-0 small py-3 mb-5 fw-bold text-center"><?php echo $message; ?></div>
+            <?php endif; ?>
+
+            <div class="feedback-roll mt-4">
+                <?php if($active_forms->num_rows > 0): ?>
+                    <?php while($f = $active_forms->fetch_assoc()): ?>
+                        <div class="feedback-item">
+                            <div class="row align-items-start gx-5">
+                                <div class="col-md-4">
+                                    <div class="flat-header">
+                                        <h5><?php echo htmlspecialchars($f['title']); ?></h5>
+                                        <p class="fw-bold text-dark mt-2"><?php echo htmlspecialchars($f['first_name'] . ' ' . $f['last_name']); ?></p>
+                                        <p class="extra-small text-primary fw-bold"><?php echo htmlspecialchars($f['subject_name']); ?></p>
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="subject" class="form-label">Subject</label>
-                                    <select class="form-select" name="subject" required>
-                                        <option value="">Select Subject</option>
-                                        <?php
-                                        $subjects = ['PHP', 'Java', 'Basic Linux', 'DSA', 'MIS & ERP', 'English & Communication', 'Basic Stat with R', 'Tkinter'];
-                                        foreach ($subjects as $sub) {
-                                            echo '<option value="' . $sub . '" ' . ($subject == $sub ? 'selected' : '') . '>' . $sub . '</option>';
-                                        }
-                                        ?>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="question1" class="form-label">Rate the clarity of the instructor's explanations</label>
-                                    <select class="form-select" name="question1" required>
-                                        <option value="Excellent" <?php if ($question1 == 'Excellent') echo 'selected'; ?>>Excellent</option>
-                                        <option value="Good" <?php if ($question1 == 'Good') echo 'selected'; ?>>Good</option>
-                                        <option value="Average" <?php if ($question1 == 'Average') echo 'selected'; ?>>Average</option>
-                                        <option value="Poor" <?php if ($question1 == 'Poor') echo 'selected'; ?>>Poor</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="question2" class="form-label">Did the instructor encourage participation and questions?</label>
-                                    <select class="form-select" name="question2" required>
-                                        <option value="Yes" <?php if ($question2 == 'Yes') echo 'selected'; ?>>Yes</option>
-                                        <option value="No" <?php if ($question2 == 'No') echo 'selected'; ?>>No</option>
-                                    </select>
+                                <div class="col-md-8">
+                                    <form method="POST">
+                                        <input type="hidden" name="form_id" value="<?php echo $f['id']; ?>">
+                                        
+                                        <label class="form-label text-muted extra-small fw-bold mb-3">PERFORMANCE RATING</label>
+                                        <div class="d-flex gap-3 mb-4">
+                                            <?php for($i=1; $i<=5; $i++): ?>
+                                                <div class="form-check p-0 m-0">
+                                                    <input type="radio" name="rating" value="<?php echo $i; ?>" id="r<?php echo $f['id'].$i; ?>" class="form-check-input" required>
+                                                    <label class="rating-chip" for="r<?php echo $f['id'].$i; ?>"><?php echo $i; ?></label>
+                                                </div>
+                                            <?php endfor; ?>
+                                        </div>
+
+                                        <div class="mb-4">
+                                            <label class="form-label text-muted extra-small fw-bold">QUALITATIVE FEEDBACK</label>
+                                            <textarea name="comments" class="form-control" rows="3" placeholder="Describe your learning experience..."></textarea>
+                                        </div>
+                                        
+                                        <div class="text-end">
+                                            <button type="submit" name="submit_feedback" class="btn btn-primary px-5 py-3 fw-bold rounded-pill">Transmit Feedback</button>
+                                        </div>
+                                    </form>
                                 </div>
                             </div>
-                            <div class="row mb-3">
-                                <div class="col-md-6">
-                                    <label for="question3" class="form-label">How satisfied are you with the course content?</label>
-                                    <select class="form-select" name="question3" required>
-                                        <option value="Very Satisfied" <?php if ($question3 == 'Very Satisfied') echo 'selected'; ?>>Very Satisfied</option>
-                                        <option value="Satisfied" <?php if ($question3 == 'Satisfied') echo 'selected'; ?>>Satisfied</option>
-                                        <option value="Dissatisfied" <?php if ($question3 == 'Dissatisfied') echo 'selected'; ?>>Dissatisfied</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="question4" class="form-label">Do you think the course was engaging and interesting?</label>
-                                    <select class="form-select" name="question4" required>
-                                        <option value="Yes" <?php if ($question4 == 'Yes') echo 'selected'; ?>>Yes</option>
-                                        <option value="No" <?php if ($question4 == 'No') echo 'selected'; ?>>No</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="comments" class="form-label">Any Additional Comments</label>
-                                <textarea class="form-control" name="comments" rows="4" required><?php echo htmlspecialchars($comments); ?></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary">Submit Feedback</button>
-                        </form>
+                        </div>
+                    <?php endwhile; ?>
+                <?php else: ?>
+                    <div class="text-center py-5 border rounded-4 bg-light">
+                        <i class="fas fa-check-circle text-success mb-3 fs-1 opacity-25"></i>
+                        <h5 class="fw-bold mb-1">Queue Clear</h5>
+                        <p class="text-muted small mb-0">There are no pending feedback requests for your profile.</p>
                     </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-body">
-                    <h5 class="card-title">Feedback List</h5>
-                    <?php if ($result->num_rows > 0) { ?>
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Faculty</th>
-                                <th>Subject</th>
-                                <th>Rating</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php while ($row = $result->fetch_assoc()) { ?>
-                            <tr>
-                                <td><?php echo htmlspecialchars($row['faculty']); ?></td>
-                                <td><?php echo htmlspecialchars($row['subject']); ?></td>
-                                <td><?php echo htmlspecialchars($row['question1']); ?></td>
-                                <td>
-                                    <a href="feedback.php?id=<?php echo $row['id']; ?>" class="btn btn-sm btn-warning">Edit</a>
-                                    <a href="feedback.php?delete=<?php echo $row['id']; ?>" class="btn btn-sm btn-danger"
-                                        onclick="return confirm('Are you sure you want to delete this feedback?')">Delete</a>
-                                </td>
-                            </tr>
-                            <?php } ?>
-                        </tbody>
-                    </table>
-                    <?php } else { ?>
-                    <p>No feedback available.</p>
-                    <?php } ?>
-                </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
-    <script>
-        function showFeedbackForm() {
-            document.getElementById('feedbackForm').style.display = 'block';
-        }
-
-        function hideFeedbackForm() {
-            document.getElementById('feedbackForm').style.display = 'none';
-        }
-
-        
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('id')) {
-                showFeedbackForm();
-            }
-        };
-    </script>
-
+    <style> .extra-small { font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; } </style>
+    <?php include './includes/scripts.php'; ?>
 </body>
 </html>

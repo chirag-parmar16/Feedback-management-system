@@ -1,335 +1,95 @@
 <?php
 session_start();
-include './includes/db_connection.php'; 
-
-
-session_regenerate_id(true);
-
+include './includes/db_connection.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit();
 }
 
+$page_title = 'User Profile';
+$page_subtitle = 'Personal information and account settings.';
 $user_id = $_SESSION['user_id'];
-
-
-$query = $conn->prepare("SELECT Enroll_No, first_name, middle_name, last_name, branch, semester, division, mobile_no, email_id, 
-parent_contact_no, gender, birth_date, religion, caste, nationality, blood_group, aadhar_card_no, mother_tongue, present_address, permanent_address, district, pin_code, state, country, profile_photo FROM profile_info WHERE user_id = ?");
-$query->bind_param("i", $user_id);
-$query->execute();
-$query->bind_result(
-    $Enroll_No,
-    $first_name,
-    $middle_name,
-    $last_name,
-    $branch,
-    $semester,
-    $division,
-    $mobile_no,
-    $email_id,
-    $parent_contact_no,
-    $gender,
-    $birth_date,
-    $religion,
-    $caste,
-    $nationality,
-    $blood_group,
-    $aadhar_card_no,
-    $mother_tongue,
-    $present_address,
-    $permanent_address,
-    $district,
-    $pin_code,
-    $state,
-    $country,
-    $profile_photo
-);
-$query->fetch();
-$query->close();
-
-
-if (!$first_name) {
-    $Enroll_No = $first_name = $middle_name = $last_name = $branch = $semester = $division = $mobile_no = $email_id =
-        $parent_contact_no = $gender = $birth_date = $religion = $caste = $nationality = $blood_group = $aadhar_card_no =
-        $mother_tongue = $present_address = $permanent_address = $district = $pin_code = $state = $country = $profile_photo = '';
-}
-
-
-
+$stmt = $conn->prepare("SELECT u.*, p.* FROM users u LEFT JOIN profile_info p ON u.id = p.user_id WHERE u.id = ?");
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$user = $stmt->get_result()->fetch_assoc();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profile</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>User Profile | SMS</title>
+    <?php include './includes/links.php'; ?>
+    <link rel="stylesheet" href="index.css">
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f1f2f6;
-            margin: 0;
-            padding: 0;
-            color: #333;
+        .profile-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+            height: 160px;
+            border-radius: 20px;
+            margin-bottom: -60px;
         }
-
-       
-        #navbar {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background-color: #343a40;
+        .profile-avatar {
+            width: 120px;
+            height: 120px;
+            background: white;
+            border-radius: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--primary);
+            box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+            margin: 0 auto;
+            border: 4px solid white;
         }
-
-        #sidebar {
-            position: fixed;
-            top: 80px;
-            left: 0;
-            width: 220px;
-            height: 100%;
-            background-color: #343a40;
-            padding-top: 20px;
-            z-index: 999;
-        }
-
-        .content-wrapper {
-            margin-left: 240px;
-            padding-top: 80px;
-        }
-
-        
-        .profile-card {
-            margin-top: 20px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            overflow: hidden;
-            position: sticky;
-            top: 80px;
-            
-        }
-
-        .profile-card .profile-header {
-            text-align: center;
-            background-color: #f8f9fa;
-            padding: 20px;
-        }
-
-        .profile-photo img {
-            border-radius: 50%;
-            width: 180px;
-            height: 180px;
-            object-fit: cover;
-            border: 4px solid #ddd;
-            transition: all 0.3s ease;
-        }
-
-        .profile-photo img:hover {
-            transform: scale(1.1);
-        }
-
-        .profile-details {
-            padding: 20px;
-            text-align: left;
-        }
-
-        .profile-info-table {
-            margin-top: 20px;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 10px;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-        }
-
-        .profile-info-table table {
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        .profile-info-table th,
-        .profile-info-table td {
-            padding: 10px;
-            text-align: left;
-        }
-
-        .profile-info-table th {
-            background-color: #f1f1f1;
-        }
-
-        
-        .edit-btn {
-            display: inline-block;
-            background-color: #4CAF50;
-            color: #fff;
-            padding: 12px 30px;
-            font-size: 16px;
-            text-decoration: none;
-            border-radius: 30px;
-            transition: all 0.3s ease;
-            margin-top: 20px;
-        }
-
-        .edit-btn:hover {
-            background-color: #45a049;
-            box-shadow: 0 6px 15px rgba(72, 174, 92, 0.2);
-            transform: translateY(-2px);
-        }
-
-        .edit-btn:active {
-            transform: translateY(2px);
-        }
-
-        .logout-btn {
-            display: inline-block;
-            background-color: #d9534f;
-            color: #fff;
-            padding: 12px 30px;
-            font-size: 16px;
-            text-decoration: none;
-            border-radius: 30px;
-            text-align: center;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-
-        .logout-btn:hover {
-            background-color: #c9302c;
-            transform: translateY(-2px);
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
-        }
-
-        .logout-btn:active {
-            background-color: #c12e2a;
-            transform: translateY(2px);
-        }
-
-        .logout-btn:focus {
-            outline: none;
-        }
-
-
-        
     </style>
 </head>
-
 <body>
-
-    
     <?php include './includes/navbar.php'; ?>
     <?php include './includes/sidebar.php'; ?>
 
     <div class="content-wrapper">
-        <div class="container">
-            
-            <div class="row">
-                <div class="col-md-5">
-                    <div class="profile-card">
-                        <div class="profile-header">
-                            <div class="profile-photo">
-                                <?php if ($profile_photo) { ?>
-                                    <img src="<?php echo htmlspecialchars($profile_photo); ?>" alt="Profile Photo">
-                                <?php } else { ?>
-                                    <img src="default-profile.png" alt="Default Profile Photo">
-                                <?php } ?>
-                            </div>
-                            <div class="profile-details">
-                                <h4><strong>User Name: </strong><?php echo htmlspecialchars($user_name); ?></h4>
-                                <h3><?php echo htmlspecialchars($last_name . ' ' . $first_name . ' ' . $middle_name); ?></h3>
-                                <p><strong>Enroll No:</strong> <?php echo htmlspecialchars($user_id); ?></p>
-                                <p><strong>Branch:</strong> <?php echo htmlspecialchars($branch); ?> | <strong>Semester:</strong> <?php echo htmlspecialchars($semester); ?> | <strong>Division:</strong> <?php echo htmlspecialchars($division); ?></p>
-                                <a href="profile.php" class="edit-btn">Edit Profile</a>
-                                <a href="logout.php" class="logout-btn">Logout</a>
-                            </div>
+        <div class="container" style="max-width: 900px;">
+            <div class="profile-header"></div>
+            <div class="card p-5 border-0 shadow-sm text-center">
+                <div class="profile-avatar mb-4">
+                    <?php echo strtoupper(substr($user['username'], 0, 1)); ?>
+                </div>
+                
+                <h2 class="fw-bold mb-1"><?php echo htmlspecialchars($user['first_name'] . ' ' . $user['last_name']); ?></h2>
+                <p class="text-muted mb-4"><?php echo strtoupper($user['role']); ?> • <?php echo htmlspecialchars($user['email']); ?></p>
+
+                <div class="row g-4 text-start mt-2">
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-4">
+                            <label class="form-label d-block text-muted extra-small">Enrollment / ID</label>
+                            <span class="fw-bold"><?php echo htmlspecialchars($user['Enroll_No'] ?: 'Not Set'); ?></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-4">
+                            <label class="form-label d-block text-muted extra-small">Phone Number</label>
+                            <span class="fw-bold"><?php echo htmlspecialchars($user['phone'] ?: 'No Phone'); ?></span>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-4">
+                            <label class="form-label d-block text-muted extra-small">Member Since</label>
+                            <span class="fw-bold"><?php echo date('M Y', strtotime($user['created_at'])); ?></span>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md-7">
-                    <div class="profile-info-table">
-                        <h3>Contact Information</h3>
-                        <table class="table table-bordered">
-                            <tr>
-                                <th>Email</th>
-                                <td><?php echo htmlspecialchars($email_id); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Mobile No</th>
-                                <td><?php echo htmlspecialchars($mobile_no); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Parent's Contact No</th>
-                                <td><?php echo htmlspecialchars($parent_contact_no); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Gender</th>
-                                <td><?php echo htmlspecialchars($gender); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Birth Date</th>
-                                <td><?php echo htmlspecialchars($birth_date); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Religion</th>
-                                <td><?php echo htmlspecialchars($religion); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Caste</th>
-                                <td><?php echo htmlspecialchars($caste); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Nationality</th>
-                                <td><?php echo htmlspecialchars($nationality); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Blood Group</th>
-                                <td><?php echo htmlspecialchars($blood_group); ?></td>
-                            </tr>
-                        </table>
-
-                        <h3>Address Information</h3>
-                        <table class="table table-bordered">
-                            <tr>
-                                <th>Present Address</th>
-                                <td><?php echo htmlspecialchars($present_address); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Permanent Address</th>
-                                <td><?php echo htmlspecialchars($permanent_address); ?></td>
-                            </tr>
-                            <tr>
-                                <th>District</th>
-                                <td><?php echo htmlspecialchars($district); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Pin Code</th>
-                                <td><?php echo htmlspecialchars($pin_code); ?></td>
-                            </tr>
-                            <tr>
-                                <th>State</th>
-                                <td><?php echo htmlspecialchars($state); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Country</th>
-                                <td><?php echo htmlspecialchars($country); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Aadhar Card No</th>
-                                <td><?php echo htmlspecialchars($aadhar_card_no); ?></td>
-                            </tr>
-                            <tr>
-                                <th>Mother Tongue</th>
-                                <td><?php echo htmlspecialchars($mother_tongue); ?></td>
-                            </tr>
-                        </table>
-                    </div>
+                <div class="mt-5 pt-4 border-top">
+                    <a href="dashboard.php" class="btn btn-primary px-5">Back to Dashboard</a>
                 </div>
             </div>
         </div>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    <style> .extra-small { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-bottom: 4px !important; } </style>
+    <?php include './includes/scripts.php'; ?>
 </body>
-
 </html>
