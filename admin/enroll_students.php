@@ -11,7 +11,7 @@ $page_title = 'Student Enrollment';
 $page_subtitle = 'Assign students to their respective academic classes.';
 $message = '';
 $error = '';
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['enroll_student'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['enroll_student_action'])) {
     $student_id = (int) $_POST['student_id'];
     $class_id   = (int) $_POST['class_id'];
     
@@ -109,7 +109,8 @@ $enrollments = $conn->query("SELECT se.*, u.username, p.Enroll_No, c.name as cla
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <button type="submit" name="enroll_student" class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm">Enroll Student</button>
+                        <input type="hidden" name="enroll_student_action" value="1">
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill shadow-sm">Enroll Student</button>
                     </div>
                 </form>
             </div>

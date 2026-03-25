@@ -11,7 +11,7 @@ $page_title = 'Faculty Allocation';
 $page_subtitle = 'Assign teaching staff to specific subjects and classrooms.';
 $message = '';
 $error = '';
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['assign_teacher'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['assign_teacher_action'])) {
     $teacher_id = (int) $_POST['teacher_id'];
     $subject_id = (int) $_POST['subject_id'];
     $class_id   = (int) $_POST['class_id'];
@@ -112,7 +112,8 @@ $assignments = $conn->query("SELECT ta.*, u.username as teacher_user, p.first_na
                         </select>
                     </div>
                     <div class="col-md-2">
-                        <button type="submit" name="assign_teacher" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">Assign Faculty</button>
+                        <input type="hidden" name="assign_teacher_action" value="1">
+                        <button type="submit" class="btn btn-primary w-100 py-3 fw-bold rounded-pill">Assign Faculty</button>
                     </div>
                 </form>
             </div>

@@ -10,11 +10,11 @@ if (isset($_GET['id']) && is_numeric($_GET['id'])) {
     $id = (int)$_GET['id'];
     
     // Get class_id for redirect before deleting
-    $res = $conn->query("SELECT class_id FROM timetable WHERE id = $id");
+    $res = $conn->query("SELECT class_id FROM timetables WHERE id = $id");
     $row = $res->fetch_assoc();
     $class_id = $row['class_id'] ?? 0;
 
-    $stmt = $conn->prepare("DELETE FROM timetable WHERE id = ?");
+    $stmt = $conn->prepare("DELETE FROM timetables WHERE id = ?");
     $stmt->bind_param("i", $id);
     
     if ($stmt->execute()) {

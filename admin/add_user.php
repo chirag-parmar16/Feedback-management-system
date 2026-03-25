@@ -51,7 +51,7 @@ while ($c = $classes_res->fetch_assoc()) {
             <a href="manage_users.php" class="btn btn-light border text-muted px-4 small fw-bold">Cancel</a>
                 </div>
 
-                <form action="backend/register_logic.php" method="POST">
+                <form action="../backend/register_logic.php" method="POST">
                     <?php if($edit_mode): ?>
                         <input type="hidden" name="user_id" value="<?php echo $edit_id; ?>">
                     <?php endif; ?>
@@ -150,7 +150,8 @@ while ($c = $classes_res->fetch_assoc()) {
                     </div>
 
                     <div class="mt-4">
-                        <button type="submit" name="submit_user" class="btn btn-primary px-5 py-3 fw-bold rounded-pill">
+                        <input type="hidden" name="submit_user_action" value="1">
+                        <button type="submit" class="btn btn-primary px-5 py-3 fw-bold rounded-pill">
                             <?php echo $edit_mode ? 'Save Account Changes' : 'Finalize Registration'; ?>
                         </button>
                     </div>

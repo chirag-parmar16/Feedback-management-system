@@ -21,7 +21,7 @@ $class_id = $class_info['class_id'] ?? 0;
 $timetable = [];
 if ($class_id > 0) {
     $res = $conn->query("SELECT t.*, s.name as subject_name, u.username as teacher_name, p.first_name, p.last_name 
-                         FROM timetable t
+                         FROM timetables t
                          JOIN subjects s ON t.subject_id = s.id
                          JOIN users u ON t.teacher_id = u.id
                          LEFT JOIN profile_info p ON u.id = p.user_id

@@ -73,7 +73,7 @@ $total_assignments = $stmt->get_result()->fetch_assoc()['count'];
                         <?php
                         $day_today = date('l');
                         $stmt = $conn->prepare("SELECT t.*, s.name as subject_name, c.name as class_name, c.section as class_section 
-                                                 FROM timetable t
+                                                 FROM timetables t
                                                  JOIN subjects s ON t.subject_id = s.id
                                                  JOIN classes c ON t.class_id = c.id
                                                  WHERE t.teacher_id = ? AND t.day_of_week = ?

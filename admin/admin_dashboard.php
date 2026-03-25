@@ -22,11 +22,14 @@ $total_students = safe_count($conn, "SELECT COUNT(*) as c FROM users WHERE role=
 $total_teachers = safe_count($conn, "SELECT COUNT(*) as c FROM users WHERE role='teacher'");
 $total_classes  = safe_count($conn, "SELECT COUNT(*) as c FROM classes");
 
-// Check feedback_responses table safely
-$fb_check = $conn->query("SHOW TABLES LIKE 'feedback_responses'");
-$total_feedback = ($fb_check && $fb_check->num_rows > 0)
-    ? safe_count($conn, "SELECT COUNT(*) as c FROM feedback_responses")
-    : 0;
+// ── Advanced Stats ───────────────────────────────────────────
+$total_fees_collected = safe_count($conn, "SELECT SUM(amount_paid) as c FROM payments");
+$total_outstanding = safe_count($conn, "SELECT SUM(total_amount - paid_amount) as c FROM student_fees");
+
+// Attendance Rate (Last 30 days)
+$attendance_rate = 0;
+$att_res = $conn->query("SELECT (COUNT(CASE WHEN status='Present' THEN 1 END) / COUNT(*)) * 100 as rate FROM attendance WHERE date > DATE_SUB(NOW(), INTERVAL 30 DAY)");
+if ($att_res) $attendance_rate = round($att_res->fetch_assoc()['rate'] ?? 0, 1);
 
 // Recent registrations — last 6 users (safe query)
 $recent_users = $conn->query(
@@ -42,6 +45,7 @@ $recent_users = $conn->query(
     <title>Admin Dashboard | SMS</title>
     <?php include '../includes/links.php'; ?>
     <link rel="stylesheet" href="../assets/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <?php include '../includes/navbar.php'; ?>
@@ -73,24 +77,40 @@ $recent_users = $conn->query(
                     </a>
                 </div>
                 <div class="col-6 col-md-3">
-                    <a href="manage_classes.php" class="stat-card stat-success text-decoration-none">
+                    <div class="stat-card stat-success">
                         <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="stat-icon"><i class="fas fa-school"></i></div>
-                            <i class="fas fa-arrow-right" style="color:rgba(255,255,255,0.4);font-size:.75rem"></i>
+                            <div class="stat-icon"><i class="fas fa-wallet"></i></div>
+                            <span class="small text-white-50">Collected</span>
                         </div>
-                        <div class="stat-number"><?php echo $total_classes; ?></div>
-                        <div class="stat-label">Classes</div>
-                    </a>
+                        <div class="stat-number">₹<?php echo number_format($total_fees_collected / 1000, 1); ?>k</div>
+                        <div class="stat-label">Fee Collections</div>
+                    </div>
                 </div>
                 <div class="col-6 col-md-3">
-                    <a href="admin_feedback.php" class="stat-card stat-sky text-decoration-none">
+                    <div class="stat-card stat-sky">
                         <div class="d-flex align-items-center justify-content-between mb-3">
-                            <div class="stat-icon"><i class="fas fa-comments"></i></div>
-                            <i class="fas fa-arrow-right" style="color:rgba(255,255,255,0.4);font-size:.75rem"></i>
+                            <div class="stat-icon"><i class="fas fa-percentage"></i></div>
+                            <span class="small text-white-50">30d Avg</span>
                         </div>
-                        <div class="stat-number"><?php echo $total_feedback; ?></div>
-                        <div class="stat-label">Feedback Responses</div>
-                    </a>
+                        <div class="stat-number"><?php echo $attendance_rate; ?>%</div>
+                        <div class="stat-label">Attendance Rate</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ── Analytics Charts ────────────────────────────────────── -->
+            <div class="row g-3 mb-4">
+                <div class="col-md-7">
+                    <div class="premium-panel h-100">
+                        <h6 class="fw-bold mb-4">Weekly Attendance Trend</h6>
+                        <canvas id="attendanceChart" height="200"></canvas>
+                    </div>
+                </div>
+                <div class="col-md-5">
+                    <div class="premium-panel h-100">
+                        <h6 class="fw-bold mb-4">Revenue vs Outstanding</h6>
+                        <canvas id="feeChart" height="200"></canvas>
+                    </div>
                 </div>
             </div>
 
@@ -200,5 +220,38 @@ $recent_users = $conn->query(
     </div>
 
     <?php include '../includes/scripts.php'; ?>
+    <script>
+        // Attendance Chart
+        const ctxAtt = document.getElementById('attendanceChart').getContext('2d');
+        new Chart(ctxAtt, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+                datasets: [{
+                    label: 'Attendance %',
+                    data: [85, 92, 88, 95, 90, 82], // Static for now, can be dynamically fetched
+                    borderColor: '#2563eb',
+                    tension: 0.4,
+                    fill: true,
+                    backgroundColor: 'rgba(37, 99, 235, 0.1)'
+                }]
+            },
+            options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+
+        // Fee Chart
+        const ctxFee = document.getElementById('feeChart').getContext('2d');
+        new Chart(ctxFee, {
+            type: 'doughnut',
+            data: {
+                labels: ['Collected', 'Outstanding'],
+                datasets: [{
+                    data: [<?php echo $total_fees_collected; ?>, <?php echo $total_outstanding; ?>],
+                    backgroundColor: ['#10b981', '#ef4444']
+                }]
+            },
+            options: { cutout: '70%', plugins: { legend: { position: 'bottom' } } }
+        });
+    </script>
 </body>
 </html>

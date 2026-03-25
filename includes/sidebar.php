@@ -25,6 +25,14 @@ function nav_link(string $href, string $icon, string $label, string $cur): strin
                 <p class="sidebar-section-label">Overview</p>
                 <?php echo nav_link('../admin/admin_dashboard.php', 'th-large', 'Dashboard', $cur); ?>
 
+                <p class="sidebar-section-label">Financial Management</p>
+                <?php echo nav_link('../admin/manage_fees.php', 'money-check-alt', 'Fee Structures', $cur); ?>
+                <?php echo nav_link('../admin/payment_history.php','history',      'Payment History', $cur); ?>
+
+                <p class="sidebar-section-label">Academic Control</p>
+                <?php echo nav_link('../admin/manage_sessions.php', 'history',     'Academic Years',  $cur); ?>
+                <?php echo nav_link('../admin/manage_exams.php',    'edit',        'Exams & Results', $cur); ?>
+
                 <p class="sidebar-section-label">Student Management</p>
                 <?php echo nav_link('../admin/enroll_students.php','user-graduate',      'Enroll Students',  $cur); ?>
                 <?php echo nav_link('../admin/manage_classes.php', 'layer-group',        'Classes',          $cur); ?>
@@ -36,7 +44,6 @@ function nav_link(string $href, string $icon, string $label, string $cur): strin
 
                 <p class="sidebar-section-label">Reports</p>
                 <?php echo nav_link('../admin/admin_feedback.php',   'comment-dots',    'Feedback Forms',    $cur); ?>
-                <?php echo nav_link('../admin/view_feedback_results.php', 'chart-line', 'Feedback Analytics', $cur); ?>
                 <?php echo nav_link('../admin/admin_attendance.php', 'calendar-check',  'Attendance Report', $cur); ?>
 
             <?php elseif ($role === 'teacher'): ?>
@@ -59,9 +66,12 @@ function nav_link(string $href, string $icon, string $label, string $cur): strin
 
                 <p class="sidebar-section-label">Academics</p>
                 <?php echo nav_link('../student/view_timetable.php',            'calendar-alt', 'Timetable',            $cur); ?>
-                <?php echo nav_link('../student/my_performance.php',            'chart-line',   'Performance',          $cur); ?>
+                <?php echo nav_link('../student/report_card.php',               'file-signature', 'Exam Results',       $cur); ?>
                 <?php echo nav_link('../student/student_attendance_calendar.php','calendar-alt', 'My Attendance',        $cur); ?>
                 <?php echo nav_link('../student/submit_assignment.php',         'upload',       'Submissions',          $cur); ?>
+
+                <p class="sidebar-section-label">Finance</p>
+                <?php echo nav_link('../student/my_fees.php',                   'wallet',       'Fee Receipts',         $cur); ?>
 
                 <p class="sidebar-section-label">Feedback</p>
                 <?php echo nav_link('../student/feedback.php',         'comment-dots',    'Feedback',    $cur); ?>

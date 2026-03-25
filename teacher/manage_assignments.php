@@ -12,8 +12,7 @@ $page_title = 'Coursework Registry';
 $page_subtitle = 'Create and distribute assignments to your student modules.';
 $message = '';
 
-// Create Assignment Logic
-if (isset($_POST['create_assignment'])) {
+if (isset($_POST['create_assignment_action'])) {
     $title = $_POST['title'];
     $description = $_POST['description'];
     $subject_id = $_POST['subject_id'];
@@ -21,9 +20,16 @@ if (isset($_POST['create_assignment'])) {
 
     $stmt = $conn->prepare("INSERT INTO assignments (teacher_id, subject_id, title, description, deadline) VALUES (?, ?, ?, ?, ?)");
     $stmt->bind_param("iisss", $teacher_id, $subject_id, $title, $description, $deadline);
-    $stmt->execute();
-    $message = "Educational assignment successfully posted to students!";
+    if ($stmt->execute()) {
+        $_SESSION['message'] = "Educational assignment successfully posted to students!";
+        header("Location: manage_assignments.php");
+        exit();
+    } else {
+        $message = "Database Error: " . $stmt->error;
+    }
 }
+$message = $_SESSION['message'] ?? '';
+unset($_SESSION['message']);
 
 // Fixed dropdown queries using JOIN for assigned subjects
 $subjects = $conn->query("SELECT s.id, s.name FROM subjects s JOIN teacher_assignment ta ON s.id = ta.subject_id WHERE ta.teacher_id = $teacher_id");
@@ -86,7 +92,8 @@ $assignments = $conn->query("SELECT a.*, s.name as subject_name FROM assignments
                         <textarea name="description" class="form-control" rows="3" placeholder="Provide detailed instructions for the students..."></textarea>
                     </div>
                     <div class="col-12 text-end">
-                        <button type="submit" name="create_assignment" class="btn btn-primary px-5 py-3 fw-bold rounded-pill">Deploy Assignment</button>
+                        <input type="hidden" name="create_assignment_action" value="1">
+                        <button type="submit" class="btn btn-primary px-5 py-3 fw-bold rounded-pill">Deploy Assignment</button>
                     </div>
                 </form>
             </div>
@@ -109,7 +116,7 @@ $assignments = $conn->query("SELECT a.*, s.name as subject_name FROM assignments
                             <p class="text-muted small mb-4" style="line-height: 1.6;"><?php echo nl2br(htmlspecialchars($a['description'])); ?></p>
                             <div class="d-flex justify-content-between align-items-center pt-3 border-top border-light">
                                 <span class="extra-small text-muted fw-bold">POSTED ON <?php echo date('M d, Y', strtotime($a['created_at'])); ?></span>
-                                <a href="#" class="btn btn-light border btn-sm rounded-pill px-4 fw-bold small">View Submissions</a>
+                                <a href="view_submissions.php?assignment_id=<?php echo $a['id']; ?>" class="btn btn-light border btn-sm rounded-pill px-4 fw-bold small">View Submissions</a>
                             </div>
                         </div>
                     <?php endwhile; ?>

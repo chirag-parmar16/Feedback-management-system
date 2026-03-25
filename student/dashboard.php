@@ -28,8 +28,9 @@ $total_classes = $stmt->get_result()->fetch_row()[0];
 $stmt = $conn->prepare("SELECT COUNT(*) FROM assignments a 
                          JOIN teacher_assignment ta ON a.subject_id = ta.subject_id 
                          JOIN student_enrollment e ON ta.class_id = e.class_id 
-                         WHERE e.student_id = ?");
-$stmt->bind_param("i", $student_id);
+                         WHERE e.student_id = ? AND a.deadline > NOW()
+                         AND a.id NOT IN (SELECT assignment_id FROM assignment_submissions WHERE student_id = ?)");
+$stmt->bind_param("ii", $student_id, $student_id);
 $stmt->execute();
 $total_assignments = $stmt->get_result()->fetch_row()[0];
 
@@ -137,7 +138,7 @@ $avg_attendance = round($stmt->get_result()->fetch_assoc()['avg_att'] ?? 0, 1);
                         <?php
                         $day_today = date('l');
                         $stmt = $conn->prepare("SELECT t.*, s.name as subject_name, u.username as teacher_name, p.first_name, p.last_name 
-                                                 FROM timetable t
+                                                 FROM timetables t
                                                  JOIN subjects s ON t.subject_id = s.id
                                                  JOIN users u ON t.teacher_id = u.id
                                                  LEFT JOIN profile_info p ON u.id = p.user_id
@@ -170,18 +171,18 @@ $avg_attendance = round($stmt->get_result()->fetch_assoc()['avg_att'] ?? 0, 1);
                     </div>
                 </div>
                 <div class="col-md-5">
-                    <div class="premium-panel p-4 h-100 bg-dark text-white rounded-4">
-                        <h6 class="fw-bold mb-4 d-flex align-items-center">
-                            <i class="fas fa-bullhorn text-warning me-2"></i> Notice Board
+                    <div class="premium-panel p-4 h-100 bg-white border rounded-4 border-warning border-3 border-top-0 border-bottom-0 border-end-0 shadow-sm">
+                        <h6 class="fw-bold mb-4 d-flex align-items-center text-warning">
+                            <i class="fas fa-bullhorn me-3"></i> Notice Board
                         </h6>
                         <div class="list-group list-group-flush bg-transparent">
-                            <div class="list-group-item bg-transparent border-white-50 px-0 py-3">
-                                <p class="small text-white-50 mb-1">ADMINISTRATION</p>
-                                <h6 class="fw-bold mb-0">Term vacation starting from next Monday.</h6>
+                            <div class="list-group-item bg-transparent border-light-subtle px-0 py-3">
+                                <p class="extra-small text-muted mb-1 fw-bold">ADMINISTRATION</p>
+                                <h6 class="fw-bold mb-0 text-dark" style="font-size:0.9rem">Term vacation starting from next Monday.</h6>
                             </div>
-                            <div class="list-group-item bg-transparent border-white-50 px-0 py-2">
-                                <p class="small text-white-50 mb-1">PRINCIPAL</p>
-                                <h6 class="fw-bold mb-0">Annual cultural festival volunteers needed.</h6>
+                            <div class="list-group-item bg-transparent border-light-subtle px-0 py-2">
+                                <p class="extra-small text-muted mb-1 fw-bold">PRINCIPAL</p>
+                                <h6 class="fw-bold mb-0 text-dark" style="font-size:0.9rem">Annual cultural festival volunteers needed.</h6>
                             </div>
                         </div>
                     </div>

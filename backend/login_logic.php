@@ -22,18 +22,22 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $row = $result->fetch_assoc();
         
         if (password_verify($password, $row['password'])) {
-            $_SESSION['user_id'] = $row['id'];
-            $_SESSION['username'] = $row['username'];
-            $_SESSION['role'] = $row['role'];
-
-            if ($row['role'] == 'admin') {
-                header("Location: admin_dashboard.php");
-            } elseif ($row['role'] == 'teacher') {
-                header("Location: teacher_dashboard.php");
+            if ($row['is_active'] == 0) {
+                $error = "This account has been deactivated. Please contact the administrator.";
             } else {
-                header("Location: dashboard.php");
+                $_SESSION['user_id'] = $row['id'];
+                $_SESSION['username'] = $row['username'];
+                $_SESSION['role'] = $row['role'];
+
+                if ($row['role'] == 'admin') {
+                    header("Location: admin_dashboard.php");
+                } elseif ($row['role'] == 'teacher') {
+                    header("Location: teacher_dashboard.php");
+                } else {
+                    header("Location: dashboard.php");
+                }
+                exit();
             }
-            exit();
         } else {
             $error = "Invalid password.";
         }

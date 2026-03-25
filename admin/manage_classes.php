@@ -14,7 +14,7 @@ $message = ''; $error = '';
 if (isset($_SESSION['message'])) { $message = $_SESSION['message']; unset($_SESSION['message']); }
 if (isset($_SESSION['error']))   { $error   = $_SESSION['error'];   unset($_SESSION['error']); }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_class'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['add_class_action'])) {
     $name    = htmlspecialchars(trim($_POST['name']));
     $section = htmlspecialchars(trim($_POST['section']));
 
@@ -82,7 +82,8 @@ $classes = $conn->query(
                                        maxlength="5" required
                                        value="<?php echo htmlspecialchars($_POST['section'] ?? ''); ?>">
                             </div>
-                            <button type="submit" name="add_class" class="btn btn-primary w-100 fw-bold">
+                            <input type="hidden" name="add_class_action" value="1">
+                            <button type="submit" class="btn btn-primary w-100 fw-bold">
                                 <i class="fas fa-plus me-2"></i>Add Class
                             </button>
                         </form>
@@ -130,7 +131,7 @@ $classes = $conn->query(
                                                     <?php if($row['enrolled_count'] > 0): ?>
                                                         <span class="small text-muted fst-italic" title="Remove all enrollments first">Has students</span>
                                                     <?php else: ?>
-                                                        <a href="backend/delete_class.php?id=<?php echo $row['id']; ?>"
+                                                        <a href="../backend/delete_class.php?id=<?php echo $row['id']; ?>"
                                                            class="btn btn-sm border px-3 fw-semibold small"
                                                            style="color:var(--danger);border-color:rgba(239,68,68,0.3)!important"
                                                            onclick="return confirm('Remove class <?php echo htmlspecialchars(addslashes($row['name'] . ' ' . $row['section'])); ?>? This cannot be undone.')">

@@ -1,12 +1,14 @@
 <?php
 session_start();
 include '../includes/db_connection.php';
+include '../includes/session_context.php';
+$ay = getCurrentAcademicYear($conn);
 
 if (!isset($_SESSION['user_id']) || $_SESSION['role'] !== 'teacher') {
-    header("Location: ../login.php"); exit();
+    header("Location: ../auth/login.php"); exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['attendance'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['take_attendance_action'])) {
     $subject_id      = (int) ($_POST['subject_id'] ?? 0);
     $class_id        = (int) ($_POST['class_id']   ?? 0);
     $date            = $_POST['date'] ?? date('Y-m-d');
@@ -26,10 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['attendance'])) {
         $status     = ($status === 'Present') ? 'Present' : 'Absent';
 
         $stmt = $conn->prepare(
-            "INSERT INTO attendance (student_id, subject_id, status, date) VALUES (?, ?, ?, ?)
+            "INSERT INTO attendance (student_id, subject_id, status, date, academic_year_id) VALUES (?, ?, ?, ?, ?)
              ON DUPLICATE KEY UPDATE status = VALUES(status)"
         );
-        $stmt->bind_param("iiss", $student_id, $subject_id, $status, $date);
+        $stmt->bind_param("iissi", $student_id, $subject_id, $status, $date, $ay['id']);
         if ($stmt->execute()) $saved++;
     }
 
@@ -37,9 +39,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['attendance'])) {
         'message' => "Attendance for $date saved — $saved student(s) recorded.",
         'type'    => 'success'
     ];
-    header("Location: ../attendance.php?assignment_id=" . $subject_id . "-" . $class_id);
+    header("Location: ../teacher/attendance.php?assignment_id=" . $subject_id . "-" . $class_id);
     exit();
 }
 
 // If reached without POST — redirect back
-header("Location: ../attendance.php"); exit();
+header("Location: ../teacher/attendance.php"); exit();

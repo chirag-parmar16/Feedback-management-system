@@ -49,10 +49,20 @@ if (isset($_GET['assignment_id'])) {
             $stmt2->bind_param("i", $class_id);
             $stmt2->execute();
             $students = $stmt2->get_result();
-            $selected_assignment = ['subject_id' => $subject_id, 'class_id' => $class_id];
+                        $selected_assignment = ['subject_id' => $subject_id, 'class_id' => $class_id];
         }
     }
 }
+
+// Fetch Marks History (for history table)
+$history_query = "SELECT m.*, s.name as subject_name, p.first_name, p.last_name, u.username 
+                 FROM marks m 
+                 JOIN subjects s ON m.subject_id = s.id 
+                 JOIN users u ON m.student_id = u.id 
+                 LEFT JOIN profile_info p ON u.id = p.user_id 
+                 JOIN teacher_assignment ta ON m.subject_id = ta.subject_id AND ta.teacher_id = $teacher_id 
+                 ORDER BY m.id DESC LIMIT 15";
+$history = $conn->query($history_query);
 ?>
 
 <!DOCTYPE html>
@@ -99,7 +109,7 @@ if (isset($_GET['assignment_id'])) {
 
             <?php if ($students): ?>
                 <div class="premium-panel">
-                    <form action="backend/marks_logic.php" method="POST">
+                    <form action="../backend/marks_logic.php" method="POST">
                         <input type="hidden" name="subject_id" value="<?php echo $selected_assignment['subject_id']; ?>">
                         <input type="hidden" name="class_id" value="<?php echo $selected_assignment['class_id']; ?>">
 
@@ -145,7 +155,8 @@ if (isset($_GET['assignment_id'])) {
                             </table>
                         </div>
                         <div class="mt-5 pt-4 border-top">
-                            <button type="submit" name="save_marks" class="btn btn-primary px-5 py-3 fw-bold rounded-pill shadow-sm">Finalize &amp; Log Assessment Data</button>
+                            <input type="hidden" name="save_marks_action" value="1">
+                            <button type="submit" class="btn btn-primary px-5 py-3 fw-bold rounded-pill shadow-sm">Finalize &amp; Log Assessment Data</button>
                         </div>
                     </form>
                 </div>
@@ -159,8 +170,60 @@ if (isset($_GET['assignment_id'])) {
                     <a href="teacher_dashboard.php" class="btn btn-light border px-4 small fw-bold">Return to Dashboard</a>
                 </div>
             <?php endif; ?>
+
+            <!-- Marks History Section -->
+            <div class="mt-5 pt-5">
+                <div class="flat-header">
+                    <h5>Recent Assessment Records</h5>
+                    <p>Electronic log of the latest academic evaluations performed across your assigned modules.</p>
+                </div>
+                <div class="premium-panel bg-white">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4">DATE</th>
+                                    <th>STUDENT</th>
+                                    <th>SUBJECT</th>
+                                    <th class="text-center">SCORE</th>
+                                    <th class="text-center">PERCENTAGE</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php if($history && $history->num_rows > 0): ?>
+                                    <?php while($h = $history->fetch_assoc()): ?>
+                                        <tr>
+                                            <td class="ps-4 small fw-bold text-muted"><?php echo date('M d, Y', strtotime($h['exam_date'])); ?></td>
+                                            <td class="fw-bold"><?php echo htmlspecialchars($h['first_name'] ? ($h['first_name'] . ' ' . $h['last_name']) : $h['username']); ?></td>
+                                            <td><span class="badge bg-primary-soft text-primary"><?php echo htmlspecialchars($h['subject_name']); ?></span></td>
+                                            <td class="text-center fw-bold">
+                                                <span class="text-primary"><?php echo $h['marks_obtained']; ?></span> / <?php echo $h['total_marks']; ?>
+                                            </td>
+                                            <td class="text-center">
+                                                <?php 
+                                                    $perc = ($h['marks_obtained'] / $h['total_marks']) * 100;
+                                                    $color = $perc >= 50 ? 'success' : 'danger';
+                                                ?>
+                                                <div class="progress" style="height: 6px; width: 100px; margin: 0 auto 5px;">
+                                                    <div class="progress-bar bg-<?php echo $color; ?>" style="width: <?php echo $perc; ?>%"></div>
+                                                </div>
+                                                <span class="extra-small fw-bold text-<?php echo $color; ?>"><?php echo number_format($perc, 1); ?>%</span>
+                                            </td>
+                                        </tr>
+                                    <?php endwhile; ?>
+                                <?php else: ?>
+                                    <tr>
+                                        <td colspan="5" class="text-center py-5 text-muted small">No assessment history discovered for your assigned subjects.</td>
+                                    </tr>
+                                <?php endif; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
+    <style> .extra-small { font-size: 0.7rem; } </style>
     <?php include '../includes/scripts.php'; ?>
 </body>
 </html>

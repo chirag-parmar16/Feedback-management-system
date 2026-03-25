@@ -106,7 +106,7 @@ if (isset($_GET['assignment_id'])) {
 
             <?php if ($students): ?>
                 <div class="premium-panel">
-                    <form action="backend/attendance_logic.php" method="POST">
+                    <form action="../backend/attendance_logic.php" method="POST">
                         <input type="hidden" name="subject_id" value="<?php echo $selected_assignment['subject_id']; ?>">
                         <input type="hidden" name="class_id" value="<?php echo $selected_assignment['class_id']; ?>">
 
@@ -150,6 +150,7 @@ if (isset($_GET['assignment_id'])) {
                             </table>
                         </div>
                         <div class="mt-5 pt-4 border-top">
+                            <input type="hidden" name="take_attendance_action" value="1">
                             <button type="submit" class="btn btn-primary px-5 py-3 fw-bold rounded-pill shadow-sm">Submit Attendance Protocol</button>
                         </div>
                     </form>

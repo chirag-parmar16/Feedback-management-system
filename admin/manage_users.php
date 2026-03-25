@@ -15,21 +15,21 @@ if (isset($_GET['delete_id']) && is_numeric($_GET['delete_id'])) {
     $delete_id = (int) $_GET['delete_id'];
     // Prevent admin from deleting themselves
     if ($delete_id === (int)$_SESSION['user_id']) {
-        $_SESSION['toast'] = ['message' => 'You cannot delete your own account.', 'type' => 'error'];
+        $_SESSION['toast'] = ['message' => 'You cannot deactivate your own account.', 'type' => 'error'];
     } else {
-        $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE users SET is_active = 0 WHERE id = ?");
         $stmt->bind_param("i", $delete_id);
         $stmt->execute();
-        $_SESSION['toast'] = ['message' => 'User account removed successfully.', 'type' => 'success'];
+        $_SESSION['toast'] = ['message' => 'User account deactivated (archived).', 'type' => 'success'];
     }
     header("Location: manage_users.php");
     exit();
 }
 
 $role_filter = $_GET['role'] ?? '';
-$where_clause = "";
+$where_clause = "WHERE u.is_active = 1";
 if (in_array($role_filter, ['admin', 'teacher', 'student'])) {
-    $where_clause = "WHERE u.role = '$role_filter'";
+    $where_clause .= " AND u.role = '$role_filter'";
 }
 
 $users = $conn->query("SELECT u.id, u.username, u.email, u.role, u.created_at, p.first_name, p.last_name 

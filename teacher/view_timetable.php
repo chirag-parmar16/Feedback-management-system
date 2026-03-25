@@ -12,7 +12,7 @@ $page_subtitle = 'Your weekly teaching timetable across all assigned classes';
 
 $timetable = [];
 $res = $conn->query("SELECT t.*, s.name as subject_name, c.name as class_name, c.section as class_section 
-                     FROM timetable t
+                     FROM timetables t
                      JOIN subjects s ON t.subject_id = s.id
                      JOIN classes c ON t.class_id = c.id
                      WHERE t.teacher_id = $teacher_id

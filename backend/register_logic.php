@@ -6,7 +6,7 @@ function sanitize_input($data) {
     return htmlspecialchars(stripslashes(trim($data)));
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_user'])) {
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_user_action'])) {
     $username  = sanitize_input($_POST['username']);
     $email     = sanitize_input($_POST['email']);
     $role      = sanitize_input($_POST['role']);
@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_user'])) {
     $allowed_roles = ['admin', 'teacher', 'student'];
     if (!in_array($role, $allowed_roles)) {
         $_SESSION['error'] = "Invalid role selected.";
-        header("Location: ../add_user.php" . ($user_id ? "?edit_id=$user_id" : ""));
+        header("Location: ../admin/add_user.php" . ($user_id ? "?edit_id=$user_id" : ""));
         exit();
     }
 
@@ -86,13 +86,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['submit_user'])) {
 
         $conn->commit();
         $_SESSION['toast'] = ['message' => $success_msg, 'type' => 'success'];
-        header("Location: ../manage_users.php");
+        header("Location: ../admin/manage_users.php");
         exit();
 
     } catch (Exception $e) {
         $conn->rollback();
         $_SESSION['toast'] = ['message' => 'Error: ' . $e->getMessage(), 'type' => 'error'];
-        header("Location: ../add_user.php" . ($user_id ? "?edit_id=$user_id" : ""));
+        header("Location: ../admin/add_user.php" . ($user_id ? "?edit_id=$user_id" : ""));
         exit();
     }
 }
