@@ -1,66 +1,86 @@
+<?php if (session_status() === PHP_SESSION_NONE) session_start(); ?>
+
+<?php
+$user_name = $_SESSION['username'] ?? 'User';
+$role      = $_SESSION['role'] ?? '';
+$cur = basename($_SERVER['PHP_SELF']);
+
+function nav_link(string $href, string $icon, string $label, string $cur): string {
+    $active = (basename($href) === $cur) ? 'active' : '';
+    return "<a href=\"$href\" class=\"$active\"><i class=\"fas fa-$icon\"></i> $label</a>";
+}
+?>
+
 <div class="sidebar">
     <div class="sidebar-brand">
+        <div class="sidebar-brand-mark">
+            <i class="fas fa-graduation-cap" style="color:white;font-size:.85rem"></i>
+        </div>
         SMS Portal
     </div>
-    
-    <?php if (isset($_SESSION['role'])): ?>
+
+    <?php if (!empty($role)): ?>
         <nav>
-            <?php if ($_SESSION['role'] == 'admin'): ?>
-                <a href="admin_dashboard.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'admin_dashboard.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-th-large"></i> Overview
-                </a>
-                <a href="manage_users.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage_users.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-users-cog"></i> Users
-                </a>
-                <a href="manage_classes.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage_classes.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-layer-group"></i> Classes
-                </a>
-                <a href="enroll_students.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'enroll_students.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-user-graduate"></i> Enrollment
-                </a>
-                <a href="assign_teachers.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'assign_teachers.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-chalkboard-teacher"></i> Assignments
-                </a>
-                <a href="admin_feedback.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'admin_feedback.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-comment-dots"></i> Feedback
-                </a>
-            <?php elseif ($_SESSION['role'] == 'teacher'): ?>
-                <a href="teacher_dashboard.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'teacher_dashboard.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-th-large"></i> Dashboard
-                </a>
-                <a href="attendance.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'attendance.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-calendar-check"></i> Attendance
-                </a>
-                <a href="manage_marks.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage_marks.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-poll"></i> Marks
-                </a>
-                <a href="manage_assignments.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'manage_assignments.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-book"></i> Assignments
-                </a>
-            <?php else: ?>
-                <a href="dashboard.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-th-large"></i> Dashboard
-                </a>
-                <a href="my_performance.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'my_performance.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-chart-line"></i> Performance
-                </a>
-                <a href="submit_assignment.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'submit_assignment.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-upload"></i> Submissions
-                </a>
-                <a href="feedback.php" class="<?php echo basename($_SERVER['PHP_SELF']) == 'feedback.php' ? 'active' : ''; ?>">
-                    <i class="fas fa-comment-dots"></i> Feedback
-                </a>
+            <?php if ($role === 'admin'): ?>
+                <p class="sidebar-section-label">Overview</p>
+                <?php echo nav_link('../admin/admin_dashboard.php', 'th-large', 'Dashboard', $cur); ?>
+
+                <p class="sidebar-section-label">Student Management</p>
+                <?php echo nav_link('../admin/enroll_students.php','user-graduate',      'Enroll Students',  $cur); ?>
+                <?php echo nav_link('../admin/manage_classes.php', 'layer-group',        'Classes',          $cur); ?>
+                <?php echo nav_link('../admin/manage_timetable.php', 'calendar-alt',     'Class Timetable',  $cur); ?>
+
+                <p class="sidebar-section-label">Faculty Management</p>
+                <?php echo nav_link('../admin/assign_teachers.php','chalkboard-teacher', 'Assign Teachers',  $cur); ?>
+                <?php echo nav_link('../admin/manage_users.php',   'users-cog',          'System Users',     $cur); ?>
+
+                <p class="sidebar-section-label">Reports</p>
+                <?php echo nav_link('../admin/admin_feedback.php',   'comment-dots',    'Feedback Forms',    $cur); ?>
+                <?php echo nav_link('../admin/view_feedback_results.php', 'chart-line', 'Feedback Analytics', $cur); ?>
+                <?php echo nav_link('../admin/admin_attendance.php', 'calendar-check',  'Attendance Report', $cur); ?>
+
+            <?php elseif ($role === 'teacher'): ?>
+                <p class="sidebar-section-label">Overview</p>
+                <?php echo nav_link('../teacher/teacher_dashboard.php', 'th-large',      'Dashboard',  $cur); ?>
+
+                <p class="sidebar-section-label">Classroom</p>
+                <?php echo nav_link('../teacher/attendance.php',    'calendar-check', 'Attendance',   $cur); ?>
+                <?php echo nav_link('../teacher/view_timetable.php', 'calendar-alt',   'Timetable',    $cur); ?>
+                <?php echo nav_link('../teacher/manage_marks.php',  'poll',           'Marks',        $cur); ?>
+                <?php echo nav_link('../teacher/manage_assignments.php', 'book',      'Assignments',  $cur); ?>
+
+                <p class="sidebar-section-label">Personal</p>
+                <?php echo nav_link('../teacher/my_attendance.php', 'user-clock',    'My Attendance', $cur); ?>
+                <?php echo nav_link('../teacher/my_feedback.php',    'comment-alt',   'My Feedback',   $cur); ?>
+
+            <?php else: /* student */ ?>
+                <p class="sidebar-section-label">Overview</p>
+                <?php echo nav_link('../student/dashboard.php',        'th-large',        'Dashboard',   $cur); ?>
+
+                <p class="sidebar-section-label">Academics</p>
+                <?php echo nav_link('../student/view_timetable.php',            'calendar-alt', 'Timetable',            $cur); ?>
+                <?php echo nav_link('../student/my_performance.php',            'chart-line',   'Performance',          $cur); ?>
+                <?php echo nav_link('../student/student_attendance_calendar.php','calendar-alt', 'My Attendance',        $cur); ?>
+                <?php echo nav_link('../student/submit_assignment.php',         'upload',       'Submissions',          $cur); ?>
+
+                <p class="sidebar-section-label">Feedback</p>
+                <?php echo nav_link('../student/feedback.php',         'comment-dots',    'Feedback',    $cur); ?>
             <?php endif; ?>
         </nav>
-        
-        <div class="mt-auto">
-             <a href="logout.php" class="bg-danger text-white border-0 py-2 mt-4 justify-content-center">
-                 <i class="fas fa-sign-out-alt me-0"></i> <span>Logout</span>
-             </a>
+
+        <div class="sidebar-footer">
+            <div class="sidebar-user-block">
+                <div class="sidebar-user-avatar">
+                    <?php echo strtoupper(substr($user_name, 0, 1)); ?>
+                </div>
+                <div class="sidebar-user-info">
+                    <div class="sidebar-user-name"><?php echo htmlspecialchars($user_name); ?></div>
+                    <div class="sidebar-user-role"><?php echo ucfirst($role); ?></div>
+                </div>
+            </div>
+            <a href="../auth/logout.php" class="sidebar-logout">
+                <i class="fas fa-sign-out-alt"></i> Sign Out
+            </a>
         </div>
     <?php endif; ?>
 </div>
-
-<style>
-    /* CSS moved to index.css for cleaner loading, keeping refined local fallback if needed */
-</style>

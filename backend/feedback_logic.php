@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 
     $stmt->execute();
-    header("Location: feedback.php");
+    header("Location: ../feedback.php");
     exit();
 }
 
@@ -60,7 +60,7 @@ if (isset($_GET['delete'])) {
     $stmt = $conn->prepare("DELETE FROM feedback WHERE id=? AND user_id=?");
     $stmt->bind_param("ii", $delete_id, $user_id);
     $stmt->execute();
-    header("Location: feedback.php");
+    header("Location: ../feedback.php");
     exit();
 }
 

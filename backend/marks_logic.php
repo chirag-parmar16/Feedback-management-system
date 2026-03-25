@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_marks'])) {
     foreach ($marks_data as $student_id => $obtained) {
         if ($obtained !== '') {
             $stmt = $conn->prepare("INSERT INTO marks (student_id, subject_id, marks_obtained, total_marks, exam_date) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE marks_obtained = VALUES(marks_obtained), total_marks = VALUES(total_marks)");
-            $stmt->bind_param("iiiss", $student_id, $subject_id, $obtained, $total_marks, $exam_date);
+            $stmt->bind_param("iiiis", $student_id, $subject_id, $obtained, $total_marks, $exam_date);
             $stmt->execute();
         }
     }

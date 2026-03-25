@@ -1,25 +1,37 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-$user_name = isset($_SESSION['username']) ? $_SESSION['username'] : 'User';
+if (session_status() === PHP_SESSION_NONE) session_start();
+$user_name = $_SESSION['username'] ?? 'User';
 
-// Fallback titles if not set in the page
 if (!isset($page_title)) {
-    $current_page = basename($_SERVER['PHP_SELF']);
-    if($current_page == 'admin_dashboard.php') {
-        $page_title = 'Admin Command Center';
-        $page_subtitle = 'System-wide oversight and management.';
-    } elseif($current_page == 'teacher_dashboard.php') {
-        $page_title = 'Teacher Control Panel';
-        $page_subtitle = 'Manage your classes and academic tasks.';
-    } elseif($current_page == 'dashboard.php') {
-        $page_title = 'Student Hub';
-        $page_subtitle = 'Track your learning and performance.';
-    } else {
-        $page_title = 'School Management System';
-        $page_subtitle = 'Educational Platform';
-    }
+    $cur = basename($_SERVER['PHP_SELF']);
+    $titles = [
+        'admin_dashboard.php'   => ['Dashboard',          'System overview and stats'],
+        'teacher_dashboard.php' => ['Dashboard',          'Your academic overview'],
+        'dashboard.php'         => ['Dashboard',          'Your student portal'],
+        'manage_users.php'      => ['Users',              'Manage all user accounts'],
+        'add_user.php'          => ['Add User',           'Register a new user account'],
+        'manage_classes.php'    => ['Classes',            'Set up and manage class sections'],
+        'enroll_students.php'   => ['Enroll Students',    'Assign students to classes'],
+        'assign_teachers.php'   => ['Assign Teachers',    'Link teachers to class subjects'],
+        'attendance.php'        => ['Attendance',         'Record student attendance'],
+        'manage_marks.php'      => ['Marks',              'Enter and manage exam marks'],
+        'manage_assignments.php'=> ['Assignments',        'Post and review assignments'],
+        'my_attendance.php'     => ['My Attendance',      'Log and view your attendance'],
+        'my_performance.php'    => ['My Performance',     'Your grades and attendance summary'],
+        'feedback.php'          => ['Feedback',           'Submit teacher feedback'],
+        'admin_feedback.php'    => ['Feedback Forms',     'Create and monitor feedback campaigns'],
+        'admin_attendance.php'   => ['Attendance Report',  'Student and teacher attendance by month'],
+        'student_attendance_calendar.php' => ['My Attendance','Monthly attendance calendar'],
+    ];
+    $page_title    = $titles[$cur][0] ?? 'School Management';
+    $page_subtitle = $titles[$cur][1] ?? '';
+}
+
+// Toast message from session
+$_toast = null;
+if (!empty($_SESSION['toast'])) {
+    $_toast = $_SESSION['toast'];
+    unset($_SESSION['toast']);
 }
 ?>
 
@@ -27,23 +39,27 @@ if (!isset($page_title)) {
     <div class="container-fluid">
         <div class="navbar-title-container">
             <span class="navbar-page-title"><?php echo htmlspecialchars($page_title); ?></span>
-            <?php if (isset($page_subtitle) && $page_subtitle): ?>
+            <?php if (!empty($page_subtitle)): ?>
                 <span class="navbar-page-subtitle"><?php echo htmlspecialchars($page_subtitle); ?></span>
             <?php endif; ?>
         </div>
-        
-        <div class="ms-auto d-flex align-items-center">
-            <div class="user-pill d-flex align-items-center bg-light px-3 py-1 rounded-pill">
-                <div class="avatar-xs bg-primary text-white rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 24px; height: 24px; font-size: 10px;">
+
+        <div class="ms-auto d-flex align-items-center gap-3">
+            <div class="user-pill d-flex align-items-center bg-white px-3 py-2 rounded-pill border"
+                 style="border-color:#e2e8f0!important;cursor:default">
+                <div style="width:24px;height:24px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:10px;font-weight:700;margin-right:8px">
                     <?php echo strtoupper(substr($user_name, 0, 1)); ?>
                 </div>
-                <span class="small fw-bold text-dark"><?php echo htmlspecialchars($user_name); ?></span>
+                <span class="small fw-semibold text-dark"><?php echo htmlspecialchars($user_name); ?></span>
             </div>
         </div>
     </div>
 </nav>
 
-<style>
-    .navbar { box-shadow: none !important; }
-    .user-pill { border: 1px solid #e2e8f0; }
-</style>
+<?php if (!empty($_toast)): ?>
+<!-- Toast stack rendered by JS below -->
+<div id="server-toast-data"
+     data-message="<?php echo htmlspecialchars($_toast['message']); ?>"
+     data-type="<?php echo htmlspecialchars($_toast['type'] ?? 'success'); ?>"
+     style="display:none"></div>
+<?php endif; ?>
