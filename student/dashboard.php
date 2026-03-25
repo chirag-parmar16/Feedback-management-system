@@ -11,11 +11,13 @@ $page_title = 'Student Academic Hub';
 $page_subtitle = 'Your personalized education portal and progress tracker.';
 $student_id = (int) $_SESSION['user_id'];
 
-// Check for pending feedback — prepared statement
+// Check for pending feedback — join with enrollment to only count forms for student's class
 $stmt = $conn->prepare("SELECT COUNT(*) as count FROM feedback_forms f 
+                          JOIN student_enrollment e ON f.class_id = e.class_id
                           WHERE f.status = 'active' 
+                          AND e.student_id = ?
                           AND f.id NOT IN (SELECT form_id FROM feedback_responses WHERE student_id = ?)");
-$stmt->bind_param("i", $student_id);
+$stmt->bind_param("ii", $student_id, $student_id);
 $stmt->execute();
 $pending_feedback = $stmt->get_result()->fetch_assoc()['count'];
 
@@ -76,18 +78,7 @@ $has_published_results = $stmt_res->get_result()->fetch_row()[0] > 0;
             </div>
             <!-- Academic Quick Stats -->
             <div class="row g-4 mb-4 pt-2">
-                <div class="col-md-4">
-                    <div class="premium-panel border-0 bg-primary text-white p-4 h-100 rounded-4">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h1 class="fw-bold mb-0"><?php echo $total_classes; ?></h1>
-                                <p class="small opacity-75 mb-0 fw-bold uppercase">ACTIVE SUBJECTS</p>
-                            </div>
-                            <div class="bg-white bg-opacity-25 p-3 rounded-4"><i class="fas fa-book"></i></div>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="premium-panel border-0 bg-secondary text-white p-4 h-100 rounded-4">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -98,7 +89,7 @@ $has_published_results = $stmt_res->get_result()->fetch_row()[0] > 0;
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-6">
                     <div class="premium-panel border-0 bg-accent text-white p-4 h-100 rounded-4">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>

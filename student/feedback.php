@@ -43,14 +43,14 @@ if (isset($_POST['submit_feedback_action'])) {
 $message = $_SESSION['message'] ?? '';
 unset($_SESSION['message']);
 
-// Fetch active forms for the student — prepared statement
+// Fetch active forms for the student's class — prepared statement
 $stmt = $conn->prepare("SELECT f.*, p.first_name, p.last_name, s.name as subject_name 
                                FROM feedback_forms f 
                                JOIN subjects s ON f.subject_id = s.id 
                                JOIN student_enrollment e ON e.student_id = ?
-                               JOIN timetables t ON t.class_id = e.class_id AND t.subject_id = f.subject_id
-                               LEFT JOIN profile_info p ON f.teacher_id = p.user_id 
+                               JOIN profile_info p ON f.teacher_id = p.user_id 
                                WHERE f.status = 'active' 
+                               AND f.class_id = e.class_id
                                AND f.id NOT IN (SELECT form_id FROM feedback_responses WHERE student_id = ?)
                                GROUP BY f.id
                                ORDER BY f.created_at DESC");
