@@ -67,13 +67,17 @@ $class_id = $_GET['class_id'] ?? '';
                     </select>
                 </div>
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">Start Time</label>
-                        <input type="time" name="start_time" class="form-select" required>
+                        <input type="time" name="start_time" class="form-control" required>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <label class="form-label">End Time</label>
-                        <input type="time" name="end_time" class="form-select" required>
+                        <input type="time" name="end_time" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Room No</label>
+                        <input type="text" name="room_no" class="form-control" placeholder="e.g. 101, Lab A">
                     </div>
                 </div>
                 <input type="hidden" name="add_slot_action" value="1">

@@ -13,6 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_slot_action'])) {
     $day = $_POST['day_of_week'];
     $start = $_POST['start_time'];
     $end = $_POST['end_time'];
+    $room_no = $_POST['room_no'] ?? null;
 
     // 1. Check for Teacher Conflict (Same teacher, same day, overlapping time)
     $stmt = $conn->prepare("SELECT id FROM timetables WHERE teacher_id = ? AND day_of_week = ? AND ((start_time < ? AND end_time > ?) OR (start_time < ? AND end_time > ?) OR (start_time >= ? AND end_time <= ?))");
@@ -35,8 +36,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['add_slot_action'])) {
     }
 
     // Insert Slot
-    $stmt = $conn->prepare("INSERT INTO timetables (class_id, subject_id, teacher_id, day_of_week, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("iiisss", $class_id, $subject_id, $teacher_id, $day, $start, $end);
+    $stmt = $conn->prepare("INSERT INTO timetables (class_id, subject_id, teacher_id, day_of_week, start_time, end_time, room_no) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("iiissss", $class_id, $subject_id, $teacher_id, $day, $start, $end, $room_no);
     
     if ($stmt->execute()) {
         $_SESSION['message'] = "Timetable slot added successfully!";

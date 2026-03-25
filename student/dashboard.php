@@ -34,13 +34,19 @@ $stmt->bind_param("ii", $student_id, $student_id);
 $stmt->execute();
 $total_assignments = $stmt->get_result()->fetch_row()[0];
 
-// Fixed: case-sensitive status value 'Present' matches DB enum
+// Attendance Average
 $stmt = $conn->prepare("SELECT 
     (SUM(CASE WHEN status = 'Present' THEN 1 ELSE 0 END) / COUNT(*)) * 100 as avg_att 
     FROM attendance WHERE student_id = ?");
 $stmt->bind_param("i", $student_id);
 $stmt->execute();
 $avg_attendance = round($stmt->get_result()->fetch_assoc()['avg_att'] ?? 0, 1);
+
+// Published Results Check
+$stmt_res = $conn->prepare("SELECT COUNT(*) FROM results WHERE student_id = ?");
+$stmt_res->bind_param("i", $student_id);
+$stmt_res->execute();
+$has_published_results = $stmt_res->get_result()->fetch_row()[0] > 0;
 ?>
 
 <!DOCTYPE html>
@@ -104,6 +110,17 @@ $avg_attendance = round($stmt->get_result()->fetch_assoc()['avg_att'] ?? 0, 1);
                     </div>
                 </div>
             </div>
+
+            <?php if($has_published_results): ?>
+                <div class="alert alert-success border-0 shadow-sm d-flex align-items-center mb-4 px-4 py-3 rounded-4">
+                    <i class="fas fa-medal text-success me-3 h4 mb-0"></i>
+                    <div class="flex-grow-1">
+                        <p class="small fw-bold mb-0">New Academic Results Published!</p>
+                        <p class="extra-small mb-0 opacity-75">Your official report card is now available for download.</p>
+                    </div>
+                    <a href="report_card.php" class="btn btn-success btn-sm rounded-pill px-4 fw-bold">View Report Card</a>
+                </div>
+            <?php endif; ?>
 
             <!-- Student Platform Hub -->
             <div class="premium-panel mb-5">

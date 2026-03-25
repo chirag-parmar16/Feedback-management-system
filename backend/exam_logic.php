@@ -42,7 +42,7 @@ if (isset($_GET['process_id'])) {
             $status = ($percentage >= 33) ? 'pass' : 'fail';
 
             $stmt_ins = $conn->prepare("INSERT INTO results (student_id, exam_id, total_marks_obtained, total_max_marks, percentage, grade, result_status) VALUES (?, ?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE total_marks_obtained = VALUES(total_marks_obtained), total_max_marks = VALUES(total_max_marks), percentage = VALUES(percentage), grade = VALUES(grade), result_status = VALUES(result_status)");
-            $stmt_ins->bind_param("iiddiss", $student_id, $exam_id, $obtained, $total, $percentage, $grade, $status);
+            $stmt_ins->bind_param("iidddss", $student_id, $exam_id, $obtained, $total, $percentage, $grade, $status);
             if ($stmt_ins->execute()) $processed_count++;
         }
     }

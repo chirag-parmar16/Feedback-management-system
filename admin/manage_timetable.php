@@ -89,6 +89,9 @@ $days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
                                                 <div class="slot-teacher">
                                                     <i class="fas fa-chalkboard-teacher small"></i> <?php echo htmlspecialchars($t_name); ?>
                                                 </div>
+                                                <div class="slot-teacher mt-1">
+                                                    <i class="fas fa-door-open small"></i> Room: <?php echo htmlspecialchars($slot['room_no'] ?: 'TBA'); ?>
+                                                </div>
                                                 <div class="mt-2 pt-2 border-top d-flex gap-2">
                                                     <a href="edit_timetable_slot.php?id=<?php echo $slot['id']; ?>" class="extra-small text-primary text-decoration-none">Edit</a>
                                                     <a href="backend/delete_timetable_slot.php?id=<?php echo $slot['id']; ?>" class="extra-small text-danger text-decoration-none" onclick="return confirm('Delete this slot?')">Delete</a>
